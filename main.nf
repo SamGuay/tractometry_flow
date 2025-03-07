@@ -322,7 +322,7 @@ process Bundle_Label_And_Distance_Maps {
 
         centroid=${sid}__\${bname}_centroid_${params.nb_points}.trk
         if [[ -f \${centroid} ]]; then
-            scil_bundle_label_map.py \$bundle \${centroid} tmp_out -f
+            scil_compute_bundle_voxel_label_map.py --hyperplane \$bundle \${centroid} tmp_out -f
 
             mv tmp_out/labels_map.nii.gz ${sid}__\${bname}_labels.nii.gz
             mv tmp_out/distance_map.nii.gz ${sid}__\${bname}_distances.nii.gz
