@@ -812,6 +812,9 @@ process Plot_Mean_Std_Per_Point {
     output:
     set sid, "*.png"
 
+    when:
+    !params.skip_plotting
+
     script:
     def json_str = JsonOutput.toJson(params.colors)
     """
@@ -828,6 +831,9 @@ process Plot_Lesions_Per_Point {
 
     output:
     set sid, "*.png"
+
+    when:
+    !params.skip_plotting
 
     script:
     def json_str = JsonOutput.toJson(params.colors)
@@ -1071,6 +1077,9 @@ process Plot_Population_Mean_Std_Per_Point {
 
     output:
     file "*.png"
+
+    when:
+    !params.skip_plotting
 
     script:
     def json_str = JsonOutput.toJson(params.colors)
