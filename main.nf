@@ -1067,18 +1067,28 @@ process Aggregate_All_Mean_Std_Per_Point {
     output:
     file "mean_std_per_point_${params.nb_points}.json" into population_mean_std_per_point
     file "mean_std_per_point_${params.nb_points}.xlsx"
-
+    file "mean_std_per_point_per_sub_${params.nb_points}.json"
+    file "mean_std_per_point_per_sub_${params.nb_points}.xlsx"
+    
     script:
     String json_list = jsons.join(", ").replace(',', '')
     """
     for json in $json_list
         do scil_json_merge_entries.py \$json \${json/.json/_avg.json} --remove_parent_key --recursive
+        scil_json_merge_entries.py \$json \${json/.json/_sub.json} --recursive
     done
+    
     scil_json_merge_entries.py *_avg.json mean_std_per_point_${params.nb_points}.json  \
         --recursive
     scil_json_harmonize_entries.py mean_std_per_point_${params.nb_points}.json mean_std_per_point_${params.nb_points}.json -f -v --sort_keys
     scil_json_convert_entries_to_xlsx.py mean_std_per_point_${params.nb_points}.json mean_std_per_point_${params.nb_points}.xlsx \
         --stats_over_population
+
+    scil_json_merge_entries.py *_sub.json mean_std_per_point_per_sub_${params.nb_points}.json  \
+        --recursive
+    scil_json_harmonize_entries.py mean_std_per_point_per_sub_${params.nb_points}.json mean_std_per_point_per_sub_${params.nb_points}.json -f -v --sort_keys
+    scil_json_convert_entries_to_xlsx.py mean_std_per_point_per_sub_${params.nb_points}.json mean_std_per_point_per_sub_${params.nb_points}.xlsx
+
     """
 }
 
