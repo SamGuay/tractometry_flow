@@ -306,6 +306,7 @@ process Bundle_Label_And_Distance_Maps {
     file "${sid}__*_distances_${params.nb_points}.trk"
     set sid, "${sid}__*_labels_${params.nb_points}.nii.gz" into voxel_label_maps_for_volume,
                                             voxel_label_map_for_lesion_load
+    path "${sid}_dropped_bundles_${params.nb_points}.txt", optional: true
 
     script:
     hyperplane = params.hyperplane_method ? '--hyperplane' : ''
@@ -339,11 +340,14 @@ process Bundle_Label_And_Distance_Maps {
                 
                 if [ -f "tmp_out/labels.trk" ]; then
                     mv tmp_out/labels.trk ${sid}__\${bname}_labels_${params.nb_points}.trk
+                else
+                    echo "\${bundle}" >> "./${sid}_dropped_bundles_${params.nb_points}.txt"
                 fi
                 
                 if [ -f "tmp_out/distance.trk" ]; then
                     mv tmp_out/distance.trk ${sid}__\${bname}_distances_${params.nb_points}.trk
                 fi
+
             fi
 
         fi
@@ -1077,7 +1081,7 @@ process Aggregate_All_Mean_Std_Per_Point {
         do scil_json_merge_entries.py \$json \${json/.json/_avg.json} --remove_parent_key --recursive
         scil_json_merge_entries.py \$json \${json/.json/_sub.json} --recursive
     done
-    
+
     scil_json_merge_entries.py *_avg.json mean_std_per_point_${params.nb_points}.json  \
         --recursive
     scil_json_harmonize_entries.py mean_std_per_point_${params.nb_points}.json mean_std_per_point_${params.nb_points}.json -f -v --sort_keys
