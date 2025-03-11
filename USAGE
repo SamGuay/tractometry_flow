@@ -79,13 +79,15 @@ OPTIONAL ARGUMENTS (current value)
 --min_lesion_vol                            To be consider 'a lesion' for the pipeline, a lesion must be at least ($min_lesion_vol) mm3.
 --use_provided_centroids                    Use the provided pre-computed centroids rather than using automatic computation ($use_provided_centroids)
 --skip_tract_profiles                       Skip all the steps that include tract profiling ($skip_tract_profiles)
-
+--hyperplane_method                         Use the hyperplane method instead of the euclidian/centerline method ($hyperplane_method)
+                                            It splits the bundles into subsections that follow the geometry of the bundle. 
 --bundle_suffix_to_remove                   Use to remove the suffix from RBx-Flow ($bundle_suffix_to_remove)
 
 --mean_std_density_weighting                Weight the mean/std by the local tract density ($mean_std_density_weighting)
 --mean_std_per_point_density_weighting      Weight the mean/std per point by the local tract density ($mean_std_per_point_density_weighting)
 --endpoints_metric_stats_normalize_weights  Normalize the weights to the [0, 1] range ($endpoints_metric_stats_normalize_weights)
 --skip_projection_endpoints_metrics         Skip the (slow) process that projects metrics onto the endpoints of streamlines  ($skip_projection_endpoints_metrics)
+--skip_plotting                             Skip the many steps that include plotting ($skip_plotting)
 
 --processes                                 The number of parallel processes to launch ($cpu_count).
                                             Only affects the local scheduler.
