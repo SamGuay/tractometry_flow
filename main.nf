@@ -308,6 +308,7 @@ process Bundle_Label_And_Distance_Maps {
                                             voxel_label_map_for_lesion_load
 
     script:
+    hyperplane = params.hyperplane_method ? '--hyperplane' : ''
     String bundles_list = bundles.join(", ").replace(',', '')
     """
     for bundle in $bundles_list;
@@ -322,12 +323,29 @@ process Bundle_Label_And_Distance_Maps {
 
         centroid=${sid}__\${bname}_centroid_${params.nb_points}.trk
         if [[ -f \${centroid} ]]; then
-            scil_bundle_label_map.py \$bundle \${centroid} tmp_out -f
+
+            echo "BUNDLE: \${bundle} | CENTROID: \${centroid}"
+            scil_bundle_label_map.py $hyperplane \$bundle \${centroid} tmp_out -f
+        
+
+            if [ -d "tmp_out" ]; then
+                if [ -f "tmp_out/labels_map.nii.gz" ]; then
                     mv tmp_out/labels_map.nii.gz ${sid}__\${bname}_labels_${params.nb_points}.nii.gz
-                    mv tmp_out/distance_map.nii.gz ${sid}__\${bname}_distances_${params.nb_points}.nii.gz
+                fi
                 
+                if [ -f "tmp_out/distance_map.nii.gz" ]; then
+                    mv tmp_out/distance_map.nii.gz ${sid}__\${bname}_distances_${params.nb_points}.nii.gz
+                fi
+                
+                if [ -f "tmp_out/labels.trk" ]; then
                     mv tmp_out/labels.trk ${sid}__\${bname}_labels_${params.nb_points}.trk
+                fi
+                
+                if [ -f "tmp_out/distance.trk" ]; then
                     mv tmp_out/distance.trk ${sid}__\${bname}_distances_${params.nb_points}.trk
+                fi
+            fi
+
         fi
     done
     """
