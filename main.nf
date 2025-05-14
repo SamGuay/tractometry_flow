@@ -14,6 +14,7 @@ if(params.help) {
                 "nb_points":"$params.nb_points",
                 "min_lesion_vol":"$params.min_lesion_vol",
                 "min_streamline_count":"$params.min_streamline_count",
+                "min_streamline_length":"$params.min_streamline_length",
                 "min_voxel_count":"$params.min_voxel_count",
                 "mean_std_density_weighting":"$params.mean_std_density_weighting",
                 "mean_std_per_point_density_weighting":"$params.mean_std_per_point_density_weighting",
@@ -140,16 +141,25 @@ process Remove_Invalid_Streamlines {
     String bundles_list = bundles.join(", ").replace(',', '')
     """
     for bundle in $bundles_list;
-      do if [[ \$bundle == *"__"* ]]; then
-          pos=\$((\$(echo \$bundle | grep -b -o __ | cut -d: -f1)+2))
-          bname=\${bundle:\$pos}
-          bname=\$(basename \$bname .trk)
-      else
-          bname=\$(basename \$bundle .trk)
-      fi
-      bname=\${bname/$params.bundle_suffix_to_remove/}
+        do if [[ \$bundle == *"__"* ]]; then
+            pos=\$((\$(echo \$bundle | grep -b -o __ | cut -d: -f1)+2))
+            bname=\${bundle:\$pos}
+            bname=\$(basename \$bname .trk)
+        else
+            bname=\$(basename \$bundle .trk)
+        fi
+        bname=\${bname/$params.bundle_suffix_to_remove/}
 
-      scil_tractogram_remove_invalid.py \$bundle ${sid}__\${bname}_ic.trk --remove_single_point --remove_overlapping_points --cut_invalid --no_empty
+        scil_tractogram_filter_by_length.py \$bundle tmp_\${bundle}.trk --minL $params.min_streamline_length
+        scil_tractogram_remove_invalid.py tmp_\${bundle}.trk ${sid}__\${bname}_ic.trk --remove_single_point --remove_overlapping_points --cut_invalid --no_empty
+
+      # Remove bundle if only X streamlines
+      nb_streamlines=\$(scil_tractogram_count_streamlines.py ${sid}__\${bname}_ic.trk --print_count_alone)
+
+      if [[ \$nb_streamlines -lt $params.min_streamline_count ]]; then
+        echo "Bundle ${sid}__\${bname}_ic.trk has only \$nb_streamlines streamlines. Removing."
+        rm -rf ${sid}__\${bname}_ic.trk
+      fi
     done
     """
 }
@@ -327,7 +337,6 @@ process Bundle_Label_And_Distance_Maps {
             echo "BUNDLE: \${bundle} | CENTROID: \${centroid}"
             scil_bundle_label_map.py $hyperplane \$bundle \${centroid} tmp_out -f
         
-
             if [ -d "tmp_out" ]; then
                 if [ -f "tmp_out/labels_map.nii.gz" ]; then
                     mv tmp_out/labels_map.nii.gz ${sid}__\${bname}_labels_${params.nb_points}.nii.gz
@@ -345,7 +354,6 @@ process Bundle_Label_And_Distance_Maps {
                     mv tmp_out/distance.trk ${sid}__\${bname}_distances_${params.nb_points}.trk
                 fi
             fi
-
         fi
     done
     """
@@ -471,13 +479,14 @@ process Color_Bundle {
 
     output:
     file "*_colored.trk"
+    file "new_color_dict_*.json" optional true
 
     script:
     def json_str = JsonOutput.toJson(params.colors)
     String bundles_list = bundles.join(", ").replace(',', '')
     """
     echo '$json_str' >> colors.json
-    scil_tractogram_assign_uniform_color.py $bundles_list --dict_colors colors.json --out_suffix colored
+    scil_tractogram_assign_uniform_color.py $bundles_list --dict_colors colors.json --out_suffix colored -f
     """
 }
 
